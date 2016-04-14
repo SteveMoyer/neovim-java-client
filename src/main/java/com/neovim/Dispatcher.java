@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.neovim.msgpack.NeovimException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -21,7 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Throwables.getRootCause;
 
 public class Dispatcher {
-    private static final Logger log = LoggerFactory.getLogger(Dispatcher.class);
+    private static final Logger log = Logger.getInstance(Dispatcher.class);
 
     private final ConcurrentMap<String, Invoker> handlers = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
@@ -49,14 +48,14 @@ public class Dispatcher {
     public Object dispatchMethod(String name, JsonNode object) {
         Invoker method = handlers.get(name);
         if (method == null) {
-            log.warn("Received notification {}({})", name, object);
+            log.warn(String.format("Received notification %s(%v)", name, object));
             return new NeovimException(0, "No such method: " + name);
         }
 
         try {
             return method.invoke(object);
         } catch (Exception e) {
-            log.error("{}", e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return new NeovimException(0, getRootCause(e).getMessage());
         }
     }

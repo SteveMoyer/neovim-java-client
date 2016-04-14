@@ -39,10 +39,10 @@ public class Buffer {
         messagePackRPC.sendNotification("buffer_del_line", this, index);
     }
 
-    public CompletableFuture<List<byte[]>> getLineSlice(
+    public CompletableFuture<List<String>> getLineSlice(
             long start, long end, boolean includeStart, boolean includeEnd) {
         return messagePackRPC.sendRequest(
-                new TypeReference<List<byte[]>>() {},
+                new TypeReference<List<String>>() {},
                 "buffer_get_line_slice",
                 this,
                 start,

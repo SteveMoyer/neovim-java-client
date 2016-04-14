@@ -131,7 +131,7 @@ public class NeovimModule extends SimpleModule {
             MessagePackExtensionType extensionValue =
                     (MessagePackExtensionType) jsonParser.getEmbeddedObject();
             if (extensionValue.getType() != extType) {
-                throw new JsonParseException(String.format("extensionType != %d", extType),
+                throw new JsonParseException(jsonParser, String.format("extensionType != %d", extType),
                         jsonParser.getCurrentLocation());
             }
             long id = MessagePack.newDefaultUnpacker(extensionValue.getData())

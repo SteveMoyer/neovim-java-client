@@ -2,13 +2,13 @@ package com.neovim.msgpack;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.openapi.diagnostic.Logger;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class MessagePackRPC implements AutoCloseable {
         OutputStream getOutputStream();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(MessagePackRPC.class);
+    private static final Logger log = Logger.getInstance(MessagePackRPC.class);
 
     private final RequestIdGenerator idGenerator;
     private final Connection connection;
@@ -85,7 +85,7 @@ public class MessagePackRPC implements AutoCloseable {
         this.idGenerator = checkNotNull(idGenerator);
         this.objectMapper = checkNotNull(objectMapper);
         this.connection = checkNotNull(connection);
-        notificationHandler = (method, arg) -> log.warn("Received notification {}({})", method, arg);
+        notificationHandler = (method, arg) -> log.warn(String.format("Received notification %s(%s)", method, arg));
         requestHandler = (method, arg) -> new NeovimException(-1, "Does not support Requests");
     }
 
@@ -140,6 +140,7 @@ public class MessagePackRPC implements AutoCloseable {
         try {
             send(new Notification(functionName, args));
         } catch (IOException e) {
+            log.warn("send failed", e);
             throw new UncheckedIOException(e);
         }
     }
@@ -171,16 +172,15 @@ public class MessagePackRPC implements AutoCloseable {
         try {
             JsonNode jsonNode;
             while ((jsonNode = objectMapper.readTree(connection.getInputStream())) != null) {
-                log.warn("{}", formatJsonNode(jsonNode));
                 if (!jsonNode.isArray()) {
-                    log.error("Received {}, ignoring...", jsonNode);
+                    log.error(String.format("Received %s, ignoring...", jsonNode));
                     continue;
                 }
                 parsePacket(jsonNode);
             }
         } catch (IOException e) {
             if (!closed) {
-                log.error("Input Stream error before closed: {}", e.getMessage(), e);
+                log.error("Input Stream error before closed: " + e.getMessage(), e);
                 throw new UncheckedIOException("Stream threw exception before closing", e);
             }
         }
@@ -217,7 +217,7 @@ public class MessagePackRPC implements AutoCloseable {
         try {
             send(new Response(requestId, result));
         } catch (IOException e) {
-            log.error("failed to send response: {}", e.getMessage(), e);
+            log.error("failed to send response: " + e.getMessage(), e);
         }
     }
 
@@ -238,8 +238,8 @@ public class MessagePackRPC implements AutoCloseable {
         RequestCallback<?> callback = callbacks.get(requestId);
         if (callback == null) {
             log.warn(
-                    "Response received for {}, However no request was found with that id",
-                    requestId);
+                    String.format("Response received for %d, However no request was found with that id",
+                    requestId));
             return;
         }
         Optional<NeovimException> neovimException = NeovimException.parseError(node.get(2));

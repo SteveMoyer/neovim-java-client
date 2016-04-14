@@ -16,6 +16,7 @@ import org.msgpack.value.ImmutableValue;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.core.Is.is;
@@ -35,7 +36,7 @@ public class RequestCallbackTest {
     @Mock NeovimException neovimException;
     @Mock ObjectMapper objectMapper;
 
-    @Rule public Timeout globalTimeout = new Timeout(10000);
+    @Rule public Timeout globalTimeout = new Timeout(10000, TimeUnit.MILLISECONDS);
 
     @Before
     public void setUp() throws Exception {

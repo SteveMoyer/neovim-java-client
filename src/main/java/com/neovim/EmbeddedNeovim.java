@@ -1,8 +1,7 @@
 package com.neovim;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.neovim.msgpack.MessagePackRPC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EmbeddedNeovim implements MessagePackRPC.Connection {
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger log = Logger.getInstance(EmbeddedNeovim.class);
     private final Thread thread;
     private Process neovim;
 
@@ -51,11 +50,11 @@ public class EmbeddedNeovim implements MessagePackRPC.Connection {
     public void close() throws IOException {
         try {
             if (neovim.waitFor(60, TimeUnit.SECONDS)) {
-                log.info("neovim exited with {}", neovim.exitValue());
+                log.info("neovim exited with " + neovim.exitValue());
                 thread.join();
             } else {
                 neovim.destroy();
-                log.info("neovim exited with {}", neovim.waitFor());
+                log.info("neovim exited with " + neovim.waitFor());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
